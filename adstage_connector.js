@@ -147,7 +147,7 @@
     setupConnector = function() {
         // NOTES: If you needed to set up data to pass from the main page to the connector, set it on connectionData
         tableau.connectionData = null;
-        tableau.connectionName = 'AdStage Data - Campaigns This Month'; // name the data source. This will be the data source name in Tableau
+        tableau.connectionName = 'AdStage Data - Campaigns Last Month'; // name the data source. This will be the data source name in Tableau
         tableau.submit();
     };
 
