@@ -42,6 +42,10 @@
     };
 
     myConnector.getData = function(table, doneCallback) {
+        if (tableau.password.length == 0) {
+            tableau.abortForAuth();
+        }
+
         // This makes it so AJAX calls are authenticated:
         $.ajaxSetup({
             beforeSend: function(xhr) {
