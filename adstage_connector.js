@@ -8,7 +8,12 @@
         // STEP 1: Require login - set username to organization id, and password
         // to the token.
         tableau.authType = tableau.authTypeEnum.basic;
-        initCallback();
+        if (tableau.password){
+            initCallback();
+        }
+        else {
+            tableau.abortForAuth("Put in your organization id as username and token as a password");
+        }
     };
 
     // NOTES: The getSchema function defines the columns you want to show up in
@@ -52,7 +57,7 @@
 
         // STEP 2: Configure to fit needs
         var report = {
-            date_range: "this_month",
+            date_range: "last_month",
             entity_level: "campaigns",
             fields: fields_list,
             filters: [{op: "gt", path: "impressions", value: 0}],
