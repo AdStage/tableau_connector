@@ -93,7 +93,7 @@
                     // STEP 3: add columns as needed
                     var entry = [meta.entity_id,
                                  meta.campaign_name,
-                                 Date.parse(list[jj].timeframe.start).toISOString().slice(0,10),
+                                 (new Date(list[jj].timeframe.start)),
                                  list[jj].data.spend,
                                  list[jj].data.clicks,
                                  list[jj].data.impressions,
