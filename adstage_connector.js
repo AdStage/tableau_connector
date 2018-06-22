@@ -12,7 +12,9 @@
             initCallback();
         }
         else {
-            tableau.abortForAuth("Put in your organization id as username and token as a password");
+            tableau.username = 'ORGANIZATION ID';
+            tableau.password = 'API TOKEN';
+            initCallback();
         }
     };
 
@@ -26,6 +28,7 @@
         var cols = [
             { id: "entity_id", alias: "Entity ID", dataType: tableau.dataTypeEnum.string },
             { id: "campaign_name", alias: "Campaign Name", dataType: tableau.dataTypeEnum.string },
+            { id: "network", alias: "Network", dataType: tableau.dataTypeEnum.string },
             { id: "date", alias: "Date", dataType: tableau.dataTypeEnum.date },
             { id: "spend", alias: "Spend", dataType: tableau.dataTypeEnum.float },
             { id: "clicks", alias: "Clicks", dataType: tableau.dataTypeEnum.int },
@@ -93,6 +96,7 @@
                     // STEP 3: add columns as needed
                     var entry = [meta.entity_id,
                                  meta.campaign_name,
+                                 meta.network,
                                  (new Date(list[jj].timeframe.start)),
                                  list[jj].data.spend,
                                  list[jj].data.clicks,
