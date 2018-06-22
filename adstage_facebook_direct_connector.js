@@ -34,7 +34,7 @@
             { id: "clicks", alias: "Clicks", dataType: tableau.dataTypeEnum.int },
             { id: "impressions", alias: "Impressions", dataType: tableau.dataTypeEnum.int },
             { id: "conversions", alias: "Conversions", dataType: tableau.dataTypeEnum.int },
-            // STEP 3: add columns as needed
+            // STEP 2: add columns as needed
         ];
 
         var tableInfo = {
@@ -62,14 +62,19 @@
             return i.id;
         });
 
-        // STEP 2: Configure to fit needs
+        // STEP 3: Configure to fit needs
         var report = {
             date_range: "last_month",
             entity_level: "campaigns",
             fields: fields_list,
             filters: [{op: "gt", path: "impressions", value: 0}],
             limit: 50,
-            aggregate_by: "day"
+            aggregate_by: "day",
+            provider: "facebook",
+            // STEP 4: Facebook Direct only supports one account at a time, so update
+            // the account ID accordingly here. You can find account IDs here:
+            // https://profile.adstage.io/accounts
+            targets: ["/network/facebook/account/ACCOUNT_ID"]
         };
 
         var APIPromise = makeAPIRequest(table, report, connectionUrl);
@@ -93,15 +98,15 @@
                 var meta = series[ii].meta;
                 var list = series[ii].series;
                 for (jj = 0; jj < list.length; ++jj) {
-                    // STEP 3: add columns as needed
+                    // STEP 5: add columns as needed
                     var entry = [meta.entity_id,
                                  meta.campaign_name,
                                  meta.network,
                                  (new Date(list[jj].timeframe.start)),
-                                 list[jj].data.spend,
-                                 list[jj].data.clicks,
-                                 list[jj].data.impressions,
-                                 list[jj].data.conversions];
+                                 (list[jj].data.spend || 0),
+                                 (list[jj].data.clicks || 0),
+                                 (list[jj].data.impressions || 0),
+                                 (list[jj].data.conversions || 0)];
                     toRet.push(entry);
                 }
             }
@@ -151,7 +156,7 @@
     setupConnector = function() {
         // NOTES: If you needed to set up data to pass from the main page to the connector, set it on connectionData
         tableau.connectionData = null;
-        tableau.connectionName = 'AdStage Data - Campaigns Last Month'; // name the data source. This will be the data source name in Tableau
+        tableau.connectionName = 'AdStage Facebook Direct Data - Campaigns Last Month'; // name the data source. This will be the data source name in Tableau
         tableau.submit();
     };
 

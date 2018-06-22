@@ -26,15 +26,14 @@
         var data = tableau.connectionData;
 
         var cols = [
-            { id: "entity_id", alias: "Entity ID", dataType: tableau.dataTypeEnum.string },
-            { id: "campaign_name", alias: "Campaign Name", dataType: tableau.dataTypeEnum.string },
-            { id: "network", alias: "Network", dataType: tableau.dataTypeEnum.string },
-            { id: "date", alias: "Date", dataType: tableau.dataTypeEnum.date },
-            { id: "spend", alias: "Spend", dataType: tableau.dataTypeEnum.float },
-            { id: "clicks", alias: "Clicks", dataType: tableau.dataTypeEnum.int },
-            { id: "impressions", alias: "Impressions", dataType: tableau.dataTypeEnum.int },
-            { id: "conversions", alias: "Conversions", dataType: tableau.dataTypeEnum.int },
-            // STEP 3: add columns as needed
+            { id: "CampaignId", alias: "Campaign ID", dataType: tableau.dataTypeEnum.string },
+            { id: "CampaignName", alias: "Campaign Name", dataType: tableau.dataTypeEnum.string },
+            { id: "Date", alias: "Date", dataType: tableau.dataTypeEnum.date },
+            { id: "Cost", alias: "Spend", dataType: tableau.dataTypeEnum.float },
+            { id: "Clicks", alias: "Clicks", dataType: tableau.dataTypeEnum.int },
+            { id: "Impressions", alias: "Impressions", dataType: tableau.dataTypeEnum.int },
+            { id: "Conversions", alias: "Conversions", dataType: tableau.dataTypeEnum.int },
+            // STEP 2: add columns as needed
         ];
 
         var tableInfo = {
@@ -62,14 +61,19 @@
             return i.id;
         });
 
-        // STEP 2: Configure to fit needs
+        // STEP 3: Configure to fit needs
         var report = {
             date_range: "last_month",
             entity_level: "campaigns",
             fields: fields_list,
-            filters: [{op: "gt", path: "impressions", value: 0}],
+            filters: [{op: "gt", path: "Impressions", value: 0}],
             limit: 50,
-            aggregate_by: "day"
+            aggregate_by: "day",
+            provider: "adwords",
+            // STEP 4: AdWords Direct only supports one account at a time, so update
+            // the account ID accordingly here. You can find account IDs here:
+            // https://profile.adstage.io/accounts
+            targets: ["/network/adwords/account/ACCOUNT_ID"]
         };
 
         var APIPromise = makeAPIRequest(table, report, connectionUrl);
@@ -93,15 +97,14 @@
                 var meta = series[ii].meta;
                 var list = series[ii].series;
                 for (jj = 0; jj < list.length; ++jj) {
-                    // STEP 3: add columns as needed
-                    var entry = [meta.entity_id,
-                                 meta.campaign_name,
-                                 meta.network,
+                    // STEP 5: add columns as needed
+                    var entry = [meta.CampaignId,
+                                 meta.CampaignName,
                                  (new Date(list[jj].timeframe.start)),
-                                 list[jj].data.spend,
-                                 list[jj].data.clicks,
-                                 list[jj].data.impressions,
-                                 list[jj].data.conversions];
+                                 (list[jj].data.Cost || 0),
+                                 (list[jj].data.Clicks || 0),
+                                 (list[jj].data.Impressions || 0),
+                                 (list[jj].data.Conversions || 0)];
                     toRet.push(entry);
                 }
             }
@@ -151,7 +154,7 @@
     setupConnector = function() {
         // NOTES: If you needed to set up data to pass from the main page to the connector, set it on connectionData
         tableau.connectionData = null;
-        tableau.connectionName = 'AdStage Data - Campaigns Last Month'; // name the data source. This will be the data source name in Tableau
+        tableau.connectionName = 'AdStage AdWords Direct Data - Campaigns Last Month'; // name the data source. This will be the data source name in Tableau
         tableau.submit();
     };
 

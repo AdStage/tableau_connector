@@ -26,15 +26,16 @@
         var data = tableau.connectionData;
 
         var cols = [
-            { id: "entity_id", alias: "Entity ID", dataType: tableau.dataTypeEnum.string },
-            { id: "campaign_name", alias: "Campaign Name", dataType: tableau.dataTypeEnum.string },
-            { id: "network", alias: "Network", dataType: tableau.dataTypeEnum.string },
-            { id: "date", alias: "Date", dataType: tableau.dataTypeEnum.date },
-            { id: "spend", alias: "Spend", dataType: tableau.dataTypeEnum.float },
-            { id: "clicks", alias: "Clicks", dataType: tableau.dataTypeEnum.int },
-            { id: "impressions", alias: "Impressions", dataType: tableau.dataTypeEnum.int },
-            { id: "conversions", alias: "Conversions", dataType: tableau.dataTypeEnum.int },
-            // STEP 3: add columns as needed
+            // Note that Tableau does not allow IDs containing colons, so we need to strip off
+            // the `ga:` prefix here.
+            { id: "adDistributionNetwork", alias: "Ad Distribution Network", dataType: tableau.dataTypeEnum.string },
+            { id: "adFormat", alias: "Ad Format", dataType: tableau.dataTypeEnum.string },
+            { id: "newUsers", alias: "New Users", dataType: tableau.dataTypeEnum.int },
+            { id: "bounceRate", alias: "Bounce Rate", dataType: tableau.dataTypeEnum.float },
+            { id: "sessions", alias: "Sessions", dataType: tableau.dataTypeEnum.int },
+            { id: "goalCompletionsAll", alias: "Goal Completions", dataType: tableau.dataTypeEnum.int },
+            { id: "goalConversionRateAll", alias: "Goal Conversion Rate", dataType: tableau.dataTypeEnum.float }
+            // STEP 2: add columns as needed
         ];
 
         var tableInfo = {
@@ -59,17 +60,24 @@
         var connectionUrl = "https://platform.adstage.io/api/organizations/" + tableau.username + "/build_report";
 
         var fields_list = table.tableInfo.columns.map(function(i){
-            return i.id;
+            // Add the `ga:` prefix back here.
+            return 'ga:' + i.id;
         });
 
-        // STEP 2: Configure to fit needs
+        // STEP 3: Configure to fit needs
         var report = {
             date_range: "last_month",
-            entity_level: "campaigns",
             fields: fields_list,
-            filters: [{op: "gt", path: "impressions", value: 0}],
+            filters: [{op: "gt", path: "ga:newUsers", value: 0}],
             limit: 50,
-            aggregate_by: "day"
+            aggregate_by: "day",
+            provider: "google_analytics",
+            sort_by: "ga:newUsers",
+            dimensions: ["ga:adDistributionNetwork", "ga:adFormat"],
+            // STEP 4: Google Analytics Direct only supports one view at a time, so update
+            // the view ID accordingly here. You can find view IDs in the Google Analytics
+            // interface in the account/property/view selector at the top left corner.
+            targets: ["/network/google_analytics/profile/VIEW_ID"]
         };
 
         var APIPromise = makeAPIRequest(table, report, connectionUrl);
@@ -93,15 +101,15 @@
                 var meta = series[ii].meta;
                 var list = series[ii].series;
                 for (jj = 0; jj < list.length; ++jj) {
-                    // STEP 3: add columns as needed
-                    var entry = [meta.entity_id,
-                                 meta.campaign_name,
-                                 meta.network,
+                    // STEP 5: add columns as needed
+                    var entry = [meta['ga:adDistributionNetwork'],
+                                 meta['ga:adFormat'],
                                  (new Date(list[jj].timeframe.start)),
-                                 list[jj].data.spend,
-                                 list[jj].data.clicks,
-                                 list[jj].data.impressions,
-                                 list[jj].data.conversions];
+                                 (list[jj].data['ga:newUsers'] || 0),
+                                 (list[jj].data['ga:bounceRate'] || 0),
+                                 (list[jj].data['ga:sessions'] || 0),
+                                 (list[jj].data['ga:goalCompletionsAll'] || 0),
+                                 (list[jj].data['ga:goalConversionRateAll'] || 0)];
                     toRet.push(entry);
                 }
             }
@@ -151,7 +159,7 @@
     setupConnector = function() {
         // NOTES: If you needed to set up data to pass from the main page to the connector, set it on connectionData
         tableau.connectionData = null;
-        tableau.connectionName = 'AdStage Data - Campaigns Last Month'; // name the data source. This will be the data source name in Tableau
+        tableau.connectionName = 'AdStage GA Direct Data - Last Month'; // name the data source. This will be the data source name in Tableau
         tableau.submit();
     };
 
